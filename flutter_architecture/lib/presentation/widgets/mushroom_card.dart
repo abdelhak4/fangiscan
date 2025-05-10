@@ -242,17 +242,17 @@ class MushroomCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.red),
                     ),
-                    child: Row(
+                    child: const Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.warning_amber_rounded,
                           color: Colors.red,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'WARNING: Poisonous Species',
                                 style: TextStyle(
@@ -353,7 +353,7 @@ class MushroomCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   _getSeasonEmoji(season),
-                  style: TextStyle(fontSize: 24),
+                  style: const TextStyle(fontSize: 24),
                 ),
               ),
             ),

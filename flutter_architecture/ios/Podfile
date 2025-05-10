@@ -1,0 +1,113 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '16.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+# Add Google ML Kit Pod source
+source 'https://github.com/CocoaPods/Specs.git'
+
+# Fix for GoogleMLKit/MLKitCore version conflict
+# Force all dependencies to use the same version
+pod 'GoogleMLKit/MLKitCore', '3.2.0'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+# Pre-install hook to modify dependencies
+pre_install do |installer|
+  # Force all pods to use the same version of GoogleUtilities
+  installer.pod_targets.each do |pod|
+    if pod.name.start_with?('GoogleUtilities')
+      def pod.build_type
+        Pod::BuildType.static_library
+      end
+    end
+  end
+end
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+  
+  # Create a temporary holder for Flutter pod plugins
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  # Add explicit versions for ML Kit dependencies to resolve conflicts
+  pod 'GoogleMLKit/PoseDetection', '7.0.0'
+  pod 'GoogleMLKit/EntityExtraction', '7.0.0'
+  
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+# Fix for minimum deployment target issues and other settings
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    
+    # Apply consistent deployment target to all pods
+    target.build_configurations.each do |config|
+      # Set minimum iOS version consistently
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      
+      # Disable bitcode as it's being deprecated
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      
+      # Fix signing issues for bundles
+      if config.build_settings['WRAPPER_EXTENSION'] == 'bundle'
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      end
+
+      # Add arm64 architecture for iOS simulator
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+    end
+  end
+
+  # Fix dependency conflicts
+  installer.pods_project.targets.each do |target|
+    if target.name == 'GoogleUtilities-UserDefaults'
+      target.build_configurations.each do |config|
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'COCOAPODS=1']
+        config.build_settings['OTHER_LDFLAGS'] = '$(inherited) -framework "Foundation"'
+      end
+    end
+  end
+
+  # Force specific versions for ML Kit dependencies
+  installer.pods_project.targets.each do |target|
+    if ['MLKitNaturalLanguage', 'MLKitVision', 'MLKitXenoCommon'].include?(target.name)
+      target.build_configurations.each do |config|
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'COCOAPODS=1']
+      end
+    end
+    
+    # Fix for GoogleMLKit core dependencies - ensure they all use 3.2.0
+    if target.name.start_with?('GoogleMLKit') || target.name.include?('MLKit')
+      target.build_configurations.each do |config|
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'COCOAPODS=1', 'GoogleMLKit_VERSION=3.2.0']
+      end
+    end
+  end
+end

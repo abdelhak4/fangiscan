@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:fungiscan/domain/models/mushroom.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
 /// API client for the mushroom identification service
 class MushroomApi {

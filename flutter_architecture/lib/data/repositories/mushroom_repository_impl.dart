@@ -382,7 +382,7 @@ class MushroomRepositoryImpl implements MushroomRepository {
       if (photoPath != null) {
         if (existingLocation.photos != null) {
           updatedPhotos = List<String>.from(existingLocation.photos!);
-          updatedPhotos!.add(photoPath);
+          updatedPhotos.add(photoPath);
         } else {
           updatedPhotos = [photoPath];
         }

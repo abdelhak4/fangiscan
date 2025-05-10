@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fungiscan/presentation/screens/identification_screen.dart';
 import 'package:fungiscan/presentation/screens/map_screen.dart';
 import 'package:fungiscan/presentation/screens/profile_screen.dart';
-import 'package:fungiscan/infrastructure/services/ml_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fungiscan/application/identification/identification_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -93,18 +92,18 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Welcome to',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'FungiScan',
                       style: TextStyle(
                         fontSize: 28,
@@ -224,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             top: Radius.circular(12),
                           ),
                         ),
-                        child: Center(
+                        child: const Center(
                           child: Text(
                             '🍄',
                             style: TextStyle(
@@ -500,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (pickedFile != null) {
       final File imageFile = File(pickedFile.path);
       context.read<IdentificationBloc>().add(
-        IdentifyMushroomEvent(imageFile: imageFile),
+        IdentifyMushroomEvent(imageData: imageFile),
       );
       
       // Navigate to identification screen

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -106,7 +105,8 @@ class IdentificationSuccessState extends IdentificationState {
   });
 
   @override
-  List<Object?> get props => [imageData, identifiedMushroom, alternatives, identificationId];
+  List<Object?> get props =>
+      [imageData, identifiedMushroom, alternatives, identificationId];
 }
 
 class IdentificationFailureState extends IdentificationState {
@@ -150,7 +150,8 @@ class TraitSearchResultsState extends IdentificationState {
 }
 
 // Bloc
-class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> {
+class IdentificationBloc
+    extends Bloc<IdentificationEvent, IdentificationState> {
   final MushroomRepository mushroomRepository;
   final MLService mlService;
   final _uuid = const Uuid();
@@ -176,52 +177,62 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
 
     try {
       // 1. Run the image through ML model
-      final result = await mlService.identifyMushroom(event.imageData);
-      
+      final predictions = await mlService.identifyMushroom(event.imageData);
+
       // 2. Get the top result and confidence score
-      final topResultLabel = result['topResult']['label'] as String;
-      final confidence = result['topResult']['confidence'] as double;
-      
+      if (predictions.isEmpty) {
+        throw Exception('No mushroom could be identified');
+      }
+
+      final topPrediction =
+          predictions.first; // The first prediction is the top one
+      final topResultLabel = topPrediction.name;
+      final confidence = topPrediction.confidence;
+
       // 3. Get the full mushroom data for the top result
       final mushrooms = await mushroomRepository.getAllMushrooms();
       final identifiedMushroom = mushrooms.firstWhere(
         (m) => m.commonName.toLowerCase() == topResultLabel.toLowerCase(),
         orElse: () => mushrooms.firstWhere(
           (m) => m.scientificName.toLowerCase() == topResultLabel.toLowerCase(),
-          orElse: () => throw Exception('Could not find mushroom data for $topResultLabel'),
+          orElse: () => throw Exception(
+              'Could not find mushroom data for $topResultLabel'),
         ),
       );
-      
+
       // 4. Create updated mushroom with confidence score
       final mushroomWithConfidence = identifiedMushroom.copyWith(
         confidence: confidence,
       );
-      
+
       // 5. Get alternative identifications
       final List<Mushroom> alternatives = [];
-      if (result['top3Results'] != null) {
-        final top3 = result['top3Results'] as List;
+      if (predictions.length > 1) {
         // Skip the first one as it's already our top result
-        for (var i = 1; i < top3.length; i++) {
-          final altLabel = top3[i]['label'] as String;
-          final altConfidence = top3[i]['confidence'] as double;
-          
+        for (var i = 1; i < predictions.length; i++) {
+          final altPrediction = predictions[i];
+          final altLabel = altPrediction.name;
+          final altConfidence = altPrediction.confidence;
+
           try {
-            final altMushroom = mushrooms.firstWhere(
-              (m) => m.commonName.toLowerCase() == altLabel.toLowerCase() || 
-                   m.scientificName.toLowerCase() == altLabel.toLowerCase(),
-            ).copyWith(confidence: altConfidence);
-            
+            final altMushroom = mushrooms
+                .firstWhere(
+                  (m) =>
+                      m.commonName.toLowerCase() == altLabel.toLowerCase() ||
+                      m.scientificName.toLowerCase() == altLabel.toLowerCase(),
+                )
+                .copyWith(confidence: altConfidence);
+
             alternatives.add(altMushroom);
           } catch (e) {
             print('Could not find mushroom data for alternative: $altLabel');
           }
         }
       }
-      
+
       // 6. Generate a new identification ID
       final identificationId = _uuid.v4();
-      
+
       // 7. Emit the success state
       emit(IdentificationSuccessState(
         imageData: event.imageData,
@@ -229,7 +240,7 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
         alternatives: alternatives,
         identificationId: identificationId,
       ));
-      
+
       // 8. Save the identification result in background
       String imageUrl;
       if (kIsWeb) {
@@ -239,7 +250,7 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
         // For mobile, we can use the file path
         imageUrl = 'file://${(event.imageData as File).path}';
       }
-      
+
       final identificationResult = IdentificationResult(
         id: identificationId,
         timestamp: DateTime.now(),
@@ -249,9 +260,8 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
         location: event.location,
         verifiedByExpert: false,
       );
-      
+
       await mushroomRepository.saveIdentificationResult(identificationResult);
-      
     } catch (e) {
       emit(IdentificationFailureState(
         errorMessage: 'Identification failed: ${e.toString()}',
@@ -271,8 +281,9 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
     emit(IdentificationLoadingState());
 
     try {
-      final results = await mushroomRepository.searchMushroomsByTraits(event.traits);
-      
+      final results =
+          await mushroomRepository.searchMushroomsByTraits(event.traits);
+
       emit(TraitSearchResultsState(searchResults: results));
     } catch (e) {
       emit(IdentificationFailureState(
@@ -287,7 +298,7 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
   ) async {
     try {
       final identificationId = _uuid.v4();
-      
+
       final identificationResult = IdentificationResult(
         id: identificationId,
         timestamp: DateTime.now(),
@@ -297,12 +308,11 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
         location: event.location,
         verifiedByExpert: false,
       );
-      
+
       await mushroomRepository.saveIdentificationResult(identificationResult);
-      
+
       // Reload recent identifications
       add(const LoadRecentIdentificationsEvent());
-      
     } catch (e) {
       emit(IdentificationFailureState(
         errorMessage: 'Failed to save identification: ${e.toString()}',
@@ -319,7 +329,7 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
         event.identificationId,
         event.userQuery,
       );
-      
+
       // No state update needed, could show a success message via another mechanism
     } catch (e) {
       emit(IdentificationFailureState(
@@ -340,9 +350,9 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
     Emitter<IdentificationState> emit,
   ) async {
     try {
-      final recentIdentifications = 
+      final recentIdentifications =
           await mushroomRepository.getRecentIdentifications(limit: event.limit);
-      
+
       emit(RecentIdentificationsLoadedState(
         recentIdentifications: recentIdentifications,
       ));
@@ -352,16 +362,16 @@ class IdentificationBloc extends Bloc<IdentificationEvent, IdentificationState> 
       ));
     }
   }
-  
+
   Future<void> _onLoadIdentificationHistory(
     LoadIdentificationHistoryEvent event,
     Emitter<IdentificationState> emit,
   ) async {
     emit(IdentificationLoadingState());
-    
+
     try {
       final history = await mushroomRepository.getUserIdentificationHistory();
-      
+
       emit(IdentificationHistoryLoadedState(
         identificationHistory: history,
       ));

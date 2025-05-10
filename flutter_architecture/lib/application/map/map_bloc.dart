@@ -4,7 +4,6 @@ import 'package:fungiscan/domain/models/mushroom.dart';
 import 'package:fungiscan/domain/repositories/mushroom_repository.dart';
 import 'package:fungiscan/infrastructure/services/location_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 // Events
 abstract class MapEvent extends Equatable {
@@ -153,32 +152,33 @@ class MapState extends Equatable {
 
   @override
   List<Object?> get props => [
-    status,
-    currentLocation,
-    savedLocations,
-    currentPath,
-    isRecordingPath,
-    mapType,
-    isOnline,
-    errorMessage,
-  ];
+        status,
+        currentLocation,
+        savedLocations,
+        currentPath,
+        isRecordingPath,
+        mapType,
+        isOnline,
+        errorMessage,
+      ];
 }
 
 // Bloc
 class MapBloc extends Bloc<MapEvent, MapState> {
   final MushroomRepository mushroomRepository;
   final LocationService locationService;
-  final _uuid = const Uuid();
+  // Removed unused _uuid field
 
   MapBloc({
     required this.mushroomRepository,
     required this.locationService,
   }) : super(const MapState()) {
-    locationService.locationStream.listen((position) {
+    // Updated to match LocationService's actual stream name
+    locationService.positionStream.listen((position) {
       if (state.isRecordingPath) {
         final latLng = LatLng(position.latitude, position.longitude);
         final updatedPath = List<LatLng>.from(state.currentPath)..add(latLng);
-        
+
         add(_UpdatePathEvent(updatedPath));
       }
     });
@@ -202,7 +202,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     Emitter<MapState> emit,
   ) async {
     try {
-      final position = await locationService.getCurrentLocation();
+      // Updated to match LocationService's method
+      final position = await locationService.getCurrentPosition();
       if (position != null) {
         emit(state.copyWith(
           status: MapStatus.locationUpdated,
@@ -221,7 +222,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     StartPathRecordingEvent event,
     Emitter<MapState> emit,
   ) {
-    locationService.startPathRecording();
+    // Updated to match LocationService's method
+    locationService.startTracking();
     emit(state.copyWith(
       isRecordingPath: true,
       currentPath: [],
@@ -232,7 +234,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     StopPathRecordingEvent event,
     Emitter<MapState> emit,
   ) async {
-    final path = await locationService.stopPathRecording();
+    // Updated to use correct LocationService methods
+    locationService.stopTracking();
+    final path = locationService.getCurrentTrack();
     emit(state.copyWith(
       isRecordingPath: false,
       currentPath: path,
@@ -340,12 +344,12 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(state.copyWith(status: MapStatus.loading));
 
       final locations = await mushroomRepository.getAllSavedLocations();
-      
+
       emit(state.copyWith(
         status: MapStatus.savedLocationsLoaded,
         savedLocations: locations,
       ));
-      
+
       // Check online status
       add(_CheckOnlineStatusEvent());
     } catch (e) {
@@ -370,8 +374,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       );
 
       // Reload the updated location
-      final updatedLocation = await mushroomRepository.getSavedLocationById(event.locationId);
-      
+      final updatedLocation =
+          await mushroomRepository.getSavedLocationById(event.locationId);
+
       if (updatedLocation != null) {
         // Update the location in the list
         final updatedLocations = state.savedLocations.map((location) {
@@ -407,7 +412,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   ) async {
     try {
       final success = await mushroomRepository.syncOfflineData();
-      
+
       if (success) {
         // Reload data after successful sync
         add(LoadSavedLocationsEvent());
@@ -441,10 +446,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   ) async {
     try {
       final isOnline = await mushroomRepository.isOnline();
-      
+
       if (isOnline != state.isOnline) {
         emit(state.copyWith(isOnline: isOnline));
-        
+
         // If we just came back online, try to sync data
         if (isOnline && !state.isOnline) {
           add(SyncDataEvent());

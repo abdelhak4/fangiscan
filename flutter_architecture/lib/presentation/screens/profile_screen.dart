@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fungiscan/domain/models/mushroom.dart';
-import 'package:fungiscan/application/identification/identification_bloc.dart';
 import 'package:fungiscan/infrastructure/services/ml_service.dart';
 import 'package:fungiscan/presentation/widgets/app_drawer.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -60,10 +58,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     // This avoids the need to initialize all the bloc machinery for the web preview
     
     // Show empty state for now
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.history, size: 64, color: Colors.grey),
           SizedBox(height: 16),
           Text(
@@ -102,10 +100,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     ];
     
     if (savedLocations.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.location_on, size: 64, color: Colors.grey),
             SizedBox(height: 16),
             Text(

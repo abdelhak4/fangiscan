@@ -25,7 +25,7 @@ class IdentificationScreen extends StatelessWidget {
       ),
       body: BlocConsumer<IdentificationBloc, IdentificationState>(
         listener: (context, state) {
-          if (state.status == IdentificationStatus.failure) {
+          if (state is IdentificationFailureState) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${state.errorMessage}'),
@@ -40,7 +40,7 @@ class IdentificationScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Image preview
-                if (state.imageFile != null)
+                if (state is IdentificationSuccessState)
                   Container(
                     height: 300,
                     margin: const EdgeInsets.all(16),
@@ -57,7 +57,7 @@ class IdentificationScreen extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.file(
-                        state.imageFile!,
+                        state.imageData is File ? state.imageData : File(""),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -130,7 +130,7 @@ class IdentificationScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 
                 // Identification Results
-                if (state.status == IdentificationStatus.loading)
+                if (state is IdentificationLoadingState)
                   const Center(
                     child: Column(
                       children: [
@@ -141,25 +141,24 @@ class IdentificationScreen extends StatelessWidget {
                       ],
                     ),
                   )
-                else if (state.status == IdentificationStatus.success && 
-                        state.identifiedMushroom != null)
+                else if (state is IdentificationSuccessState)
                   MushroomCard(
-                    mushroom: state.identifiedMushroom!,
+                    mushroom: state.identifiedMushroom,
                     onSaveLocation: () {
                       // Save current location
                     },
                     onAskExpert: () {
-                      _navigateToExpertChat(context, state.identifiedMushroom!);
+                      _navigateToExpertChat(context, state.identifiedMushroom);
                     },
                     onSave: () {
-                      _saveToCollection(context, state.identifiedMushroom!);
+                      _saveToCollection(context, state.identifiedMushroom);
                     },
                   ),
                 
                 const SizedBox(height: 24),
                 
                 // Additional options
-                if (state.identifiedMushroom != null)
+                if (state is IdentificationSuccessState)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
@@ -173,12 +172,12 @@ class IdentificationScreen extends StatelessWidget {
                           },
                         ),
                         const SizedBox(height: 12),
-                        if (state.identifiedMushroom!.lookalikes.isNotEmpty)
+                        if (state.identifiedMushroom.lookalikes.isNotEmpty)
                           OutlinedButton.icon(
                             icon: const Icon(Icons.compare),
                             label: const Text('View Similar Species'),
                             onPressed: () {
-                              _viewSimilarSpecies(context, state.identifiedMushroom!);
+                              _viewSimilarSpecies(context, state.identifiedMushroom);
                             },
                           ),
                       ],
@@ -219,7 +218,7 @@ class IdentificationScreen extends StatelessWidget {
     if (pickedFile != null) {
       final File imageFile = File(pickedFile.path);
       context.read<IdentificationBloc>().add(
-        IdentifyMushroomEvent(imageFile: imageFile),
+        IdentifyMushroomEvent(imageData: imageFile),
       );
     }
   }
@@ -229,11 +228,11 @@ class IdentificationScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Identification Tips'),
-        content: SingleChildScrollView(
+        content: const SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Text(
                 'For best results:',
                 style: TextStyle(fontWeight: FontWeight.bold),

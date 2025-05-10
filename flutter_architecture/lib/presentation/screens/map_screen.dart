@@ -736,7 +736,7 @@ class _MapScreenState extends State<MapScreen> {
                               color: Theme.of(context).primaryColor.withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: Center(
+                            child: const Center(
                               child: Text(
                                 '🍄',
                                 style: TextStyle(fontSize: 20),

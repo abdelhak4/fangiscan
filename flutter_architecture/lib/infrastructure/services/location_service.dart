@@ -1,296 +1,386 @@
 import 'dart:async';
-import 'dart:math' as math;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
+import 'package:fungiscan/domain/models/foraging_site.dart';
+import 'package:hive/hive.dart';
+import 'package:logging/logging.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:uuid/uuid.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
-/// Service for handling location tracking and foraging path recording
+/// Service for handling location tracking and foraging site management
+/// Supports offline-first functionality for remote areas
 class LocationService {
-  // Stream for real-time location updates
-  StreamSubscription<Position>? _positionStreamSubscription;
-  final _locationController = StreamController<Position>.broadcast();
-  
-  /// Stream of location updates that can be listened to
-  Stream<Position> get locationStream => _locationController.stream;
-  
-  // Track user path during foraging
-  final List<LatLng> _currentPath = [];
-  
-  /// Current recorded path
-  List<LatLng> get currentPath => List.unmodifiable(_currentPath);
-  
-  // Track if we're currently recording a path
-  bool _isRecordingPath = false;
-  
-  /// Whether a path is currently being recorded
-  bool get isRecordingPath => _isRecordingPath;
-  
-  /// Initialize the location service and check permissions
+  final _logger = Logger('LocationService');
+  final _uuid = const Uuid();
+
+  // Stream controllers
+  final StreamController<Position> _positionStreamController =
+      StreamController<Position>.broadcast();
+  final StreamController<List<ForagingSite>> _foragingSitesStreamController =
+      StreamController<List<ForagingSite>>.broadcast();
+
+  // Streams
+  Stream<Position> get positionStream => _positionStreamController.stream;
+  Stream<List<ForagingSite>> get foragingSitesStream =>
+      _foragingSitesStreamController.stream;
+
+  // Location tracking
+  StreamSubscription<Position>? _positionSubscription;
+  Position? _lastKnownPosition;
+  bool _isTracking = false;
+  List<LatLng> _currentTrack = [];
+  ForagingSite? _activeForagingSite;
+
+  // Local storage key for offline data
+  static const String _foragingSitesBoxName = 'foragingSites';
+
+  /// Initialize the location service
   Future<void> initialize() async {
-    if (!kIsWeb) {
-      await _checkLocationPermission();
-    }
-  }
-  
-  /// Check and request location permissions if needed
-  Future<bool> _checkLocationPermission() async {
-    if (kIsWeb) {
-      // Web platform has different permission model
-      return true;
-    }
-    
+    _logger.info('Initializing location service');
+
     // Check if location services are enabled
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // Request to enable location services
-      // This would typically show a dialog to the user
-      return false;
+    final locationEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!locationEnabled) {
+      _logger.warning('Location services are disabled');
     }
-    
+
     // Check location permission
-    var permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return false;
+        _logger.severe('Location permission denied');
+        return;
       }
     }
-    
-    // Handle permanently denied permission
+
     if (permission == LocationPermission.deniedForever) {
-      // Direct user to app settings to enable permission
-      await openAppSettings();
-      return false;
-    }
-    
-    return true;
-  }
-  
-  /// Get the current device location
-  Future<Position?> getCurrentLocation() async {
-    if (kIsWeb) {
-      // For web development, return a mock position
-      return Position(
-        latitude: 37.4219999,
-        longitude: -122.0840575,
-        timestamp: DateTime.now(),
-        accuracy: 10.0,
-        altitude: 0.0,
-        heading: 0.0,
-        speed: 0.0,
-        speedAccuracy: 0.0,
-        altitudeAccuracy: 0.0,
-        headingAccuracy: 0.0,
-      );
-    }
-    
-    final hasPermission = await _checkLocationPermission();
-    if (!hasPermission) return null;
-    
-    try {
-      return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-    } catch (e) {
-      print('Error getting location: $e');
-      return null;
-    }
-  }
-  
-  /// Start tracking location updates
-  void startLocationTracking() {
-    if (kIsWeb) {
-      // For web, create a simulated position stream
-      _simulatePositionUpdates();
+      _logger.severe('Location permission permanently denied');
       return;
     }
-    
-    _positionStreamSubscription?.cancel();
-    
-    _positionStreamSubscription = Geolocator.getPositionStream(
+
+    // Get initial position
+    try {
+      _lastKnownPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      _logger.info('Initial position: $_lastKnownPosition');
+    } catch (e) {
+      _logger.warning('Failed to get initial position: $e');
+    }
+
+    // Load saved foraging sites
+    await _loadForagingSites();
+  }
+
+  /// Get current user position with accuracy options
+  /// High accuracy for mapping, low for general area
+  Future<Position?> getCurrentPosition({
+    bool highAccuracy = true,
+  }) async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy:
+            highAccuracy ? LocationAccuracy.high : LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      _lastKnownPosition = position;
+      return position;
+    } catch (e) {
+      _logger.warning('Failed to get current position: $e');
+      return _lastKnownPosition; // Return last known as fallback
+    }
+  }
+
+  /// Get last known position (may be null if never obtained)
+  Position? getLastKnownPosition() {
+    return _lastKnownPosition;
+  }
+
+  /// Start tracking user location (for creating foraging paths)
+  Future<void> startTracking() async {
+    if (_isTracking) return;
+
+    _logger.info('Starting location tracking');
+    _isTracking = true;
+    _currentTrack = [];
+
+    // Get current position as starting point
+    final currentPosition = await getCurrentPosition();
+    if (currentPosition != null) {
+      _currentTrack
+          .add(LatLng(currentPosition.latitude, currentPosition.longitude));
+    }
+
+    // Subscribe to position updates
+    _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 5, // Update every 5 meters
+        distanceFilter: 10, // Update every 10 meters
       ),
-    ).listen(
-      (Position position) {
-        _locationController.add(position);
-        
-        if (_isRecordingPath) {
-          _currentPath.add(LatLng(position.latitude, position.longitude));
-        }
-      },
-      onError: (error) {
-        print('Error in location stream: $error');
-      },
-    );
-  }
-  
-  // For web development, simulate location updates
-  void _simulatePositionUpdates() {
-    // Base coordinates
-    double baseLat = 37.4219999;
-    double baseLng = -122.0840575;
-    
-    // Cancel any existing subscription
-    _positionStreamSubscription?.cancel();
-    
-    // Create a periodic timer to simulate movement
-    _positionStreamSubscription = Stream.periodic(
-      const Duration(seconds: 3),
-      (i) {
-        // Add small random variations to simulate movement
-        final lat = baseLat + (math.Random().nextDouble() - 0.5) * 0.001;
-        final lng = baseLng + (math.Random().nextDouble() - 0.5) * 0.001;
-        
-        return Position(
-          latitude: lat,
-          longitude: lng,
-          timestamp: DateTime.now(),
-          accuracy: 10.0,
-          altitude: 0.0,
-          heading: 0.0,
-          speed: 0.0,
-          speedAccuracy: 0.0,
-          altitudeAccuracy: 0.0,
-          headingAccuracy: 0.0,
-        );
-      },
-    ).listen((position) {
-      _locationController.add(position);
-      
-      if (_isRecordingPath) {
-        _currentPath.add(LatLng(position.latitude, position.longitude));
+    ).listen((Position position) {
+      _lastKnownPosition = position;
+      _positionStreamController.add(position);
+
+      if (_isTracking) {
+        _currentTrack.add(LatLng(position.latitude, position.longitude));
       }
+    }, onError: (e) {
+      _logger.severe('Error in position stream: $e');
     });
   }
-  
-  /// Stop tracking location updates
-  void stopLocationTracking() {
-    _positionStreamSubscription?.cancel();
-    _positionStreamSubscription = null;
+
+  /// Stop tracking user location
+  void stopTracking() {
+    if (!_isTracking) return;
+
+    _logger.info('Stopping location tracking');
+    _isTracking = false;
+    _positionSubscription?.cancel();
   }
-  
-  /// Start recording a foraging path
-  void startPathRecording() {
-    _currentPath.clear();
-    _isRecordingPath = true;
-    
-    // Make sure we're tracking location
-    if (_positionStreamSubscription == null) {
-      startLocationTracking();
+
+  /// Get current track points (path walked while tracking)
+  List<LatLng> getCurrentTrack() {
+    return List.unmodifiable(_currentTrack);
+  }
+
+  /// Start a new foraging session at the current location
+  Future<ForagingSite> startForagingSite(String name, String notes) async {
+    final currentPosition = await getCurrentPosition();
+    if (currentPosition == null) {
+      throw Exception('Cannot start foraging site: location unavailable');
     }
+
+    _logger.info('Starting new foraging site: $name');
+
+    // Create new foraging site
+    final site = ForagingSite(
+      id: _uuid.v4(),
+      name: name,
+      latitude: currentPosition.latitude,
+      longitude: currentPosition.longitude,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      notes: notes,
+      trackPoints: [],
+      mushroomFinds: [],
+    );
+
+    // Start tracking
+    _activeForagingSite = site;
+    await startTracking();
+
+    // Save to storage
+    await _saveForagingSite(site);
+
+    return site;
   }
-  
-  /// Stop recording the current path and return it
-  Future<List<LatLng>> stopPathRecording() async {
-    _isRecordingPath = false;
-    return _currentPath;
-  }
-  
-  /// Calculate the distance of a path in meters
-  double calculatePathDistance(List<LatLng> path) {
-    double totalDistance = 0;
-    
-    for (int i = 0; i < path.length - 1; i++) {
-      totalDistance += Geolocator.distanceBetween(
-        path[i].latitude,
-        path[i].longitude,
-        path[i + 1].latitude,
-        path[i + 1].longitude,
-      );
-    }
-    
-    return totalDistance;
-  }
-  
-  /// Format a distance in a human-readable way
-  String formatDistance(double distanceInMeters) {
-    if (distanceInMeters < 1000) {
-      return '${distanceInMeters.toStringAsFixed(0)} m';
-    } else {
-      final km = distanceInMeters / 1000;
-      return '${km.toStringAsFixed(2)} km';
-    }
-  }
-  
-  /// Calculate the area encompassed by a path in square meters
-  double calculateArea(List<LatLng> path) {
-    // This is a simple implementation of the Shoelace formula (Gauss's area formula)
-    if (path.length < 3) return 0; // Need at least 3 points for an area
-    
-    double area = 0;
-    
-    for (int i = 0; i < path.length; i++) {
-      int j = (i + 1) % path.length;
-      
-      // Convert to cartesian coordinates (approximately)
-      // This is a simplification and not accurate for large areas or near poles
-      final lat1 = path[i].latitude * 111320; // 1 degree lat is about 111320 meters
-      final lng1 = path[i].longitude * 111320 * math.cos(path[i].latitude * math.pi / 180);
-      final lat2 = path[j].latitude * 111320;
-      final lng2 = path[j].longitude * 111320 * math.cos(path[j].latitude * math.pi / 180);
-      
-      area += (lat1 * lng2) - (lng1 * lat2);
-    }
-    
-    return area.abs() / 2;
-  }
-  
-  /// Format an area in a human-readable way
-  String formatArea(double areaInSquareMeters) {
-    if (areaInSquareMeters < 10000) {
-      return '${areaInSquareMeters.toStringAsFixed(0)} m²';
-    } else {
-      final hectares = areaInSquareMeters / 10000;
-      return '${hectares.toStringAsFixed(2)} ha';
-    }
-  }
-  
-  /// Check if a location is within a geofenced area
-  bool isLocationInArea(LatLng location, List<LatLng> area) {
-    if (area.length < 3) return false; // Need at least 3 points for an area
-    
-    // Ray casting algorithm
-    bool isInside = false;
-    for (int i = 0, j = area.length - 1; i < area.length; i++) {
-      j = (i > 0) ? i - 1 : area.length - 1;
-      
-      if (((area[i].latitude > location.latitude) != 
-           (area[j].latitude > location.latitude)) &&
-          (location.longitude < (area[j].longitude - area[i].longitude) * 
-           (location.latitude - area[i].latitude) / 
-           (area[j].latitude - area[i].latitude) + area[i].longitude)) {
-        isInside = !isInside;
-      }
-    }
-    
-    return isInside;
-  }
-  
-  /// Get a descriptive address for a location
-  Future<String?> getAddressFromLocation(LatLng location) async {
-    if (kIsWeb) {
-      // For web, return a placeholder address
-      return "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA";
-    }
-    
-    try {
-      // This would use a geocoding service in a real app
-      // For example, the geocoding package or Google Maps API
-      
-      // Placeholder for demo
-      return "Location at ${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}";
-    } catch (e) {
-      print('Error getting address: $e');
+
+  /// End current foraging session and save track
+  Future<ForagingSite?> endForagingSite() async {
+    if (_activeForagingSite == null) {
+      _logger.warning('No active foraging site to end');
       return null;
     }
+
+    _logger.info('Ending foraging site: ${_activeForagingSite!.name}');
+
+    // Stop tracking
+    stopTracking();
+
+    // Update site with track points
+    final updatedSite = _activeForagingSite!.copyWith(
+      trackPoints: _currentTrack,
+      updatedAt: DateTime.now(),
+    );
+
+    // Save to storage
+    await _saveForagingSite(updatedSite);
+
+    // Clear active site
+    final result = updatedSite;
+    _activeForagingSite = null;
+    _currentTrack = [];
+
+    return result;
   }
-  
-  /// Clean up resources when the service is no longer needed
+
+  /// Record a mushroom find at current location
+  Future<void> recordMushroomFind({
+    required String mushroomName,
+    required String notes,
+    File? image,
+  }) async {
+    if (_activeForagingSite == null) {
+      _logger.warning('No active foraging site to record find');
+      return;
+    }
+
+    final currentPosition = await getCurrentPosition();
+    if (currentPosition == null) {
+      throw Exception('Cannot record mushroom find: location unavailable');
+    }
+
+    _logger.info('Recording mushroom find: $mushroomName');
+
+    // Save image if provided
+    String? imagePath;
+    if (image != null) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName =
+          '${_uuid.v4()}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedImage =
+          await image.copy('${appDir.path}/mushroom_finds/$fileName');
+      imagePath = savedImage.path;
+    }
+
+    // Add find to active site
+    final newFind = MushroomFind(
+      id: _uuid.v4(),
+      name: mushroomName,
+      latitude: currentPosition.latitude,
+      longitude: currentPosition.longitude,
+      timestamp: DateTime.now(),
+      notes: notes,
+      imagePath: imagePath,
+    );
+
+    final updatedSite = _activeForagingSite!.copyWith(
+      mushroomFinds: [..._activeForagingSite!.mushroomFinds, newFind],
+      updatedAt: DateTime.now(),
+    );
+
+    _activeForagingSite = updatedSite;
+
+    // Save to storage
+    await _saveForagingSite(updatedSite);
+
+    // Update stream
+    await _loadForagingSites();
+  }
+
+  /// Get all saved foraging sites
+  Future<List<ForagingSite>> getForagingSites() async {
+    try {
+      final box = await Hive.openBox<Map>(_foragingSitesBoxName);
+
+      final List<ForagingSite> sites = [];
+      for (var i = 0; i < box.length; i++) {
+        final Map? rawSite = box.getAt(i);
+        if (rawSite != null) {
+          sites.add(ForagingSite.fromJson(Map<String, dynamic>.from(rawSite)));
+        }
+      }
+
+      return sites;
+    } catch (e) {
+      _logger.severe('Error retrieving foraging sites: $e');
+      return [];
+    }
+  }
+
+  /// Get foraging site by ID
+  Future<ForagingSite?> getForagingSiteById(String id) async {
+    final sites = await getForagingSites();
+    return sites.firstWhere(
+      (site) => site.id == id,
+      orElse: () => throw Exception('Foraging site not found: $id'),
+    );
+  }
+
+  /// Delete a foraging site
+  Future<void> deleteForagingSite(String id) async {
+    _logger.info('Deleting foraging site: $id');
+
+    try {
+      final box = await Hive.openBox<Map>(_foragingSitesBoxName);
+
+      // Find and delete the site
+      for (var i = 0; i < box.length; i++) {
+        final Map? rawSite = box.getAt(i);
+        if (rawSite != null) {
+          final site =
+              ForagingSite.fromJson(Map<String, dynamic>.from(rawSite));
+          if (site.id == id) {
+            await box.deleteAt(i);
+            break;
+          }
+        }
+      }
+
+      // Update stream
+      await _loadForagingSites();
+    } catch (e) {
+      _logger.severe('Error deleting foraging site: $e');
+      throw Exception('Failed to delete foraging site: $e');
+    }
+  }
+
+  /// Save a foraging site to storage
+  Future<void> _saveForagingSite(ForagingSite site) async {
+    try {
+      final box = await Hive.openBox<Map>(_foragingSitesBoxName);
+
+      // Check if site already exists to update it
+      bool found = false;
+      for (var i = 0; i < box.length; i++) {
+        final Map? rawSite = box.getAt(i);
+        if (rawSite != null) {
+          final existingSite =
+              ForagingSite.fromJson(Map<String, dynamic>.from(rawSite));
+          if (existingSite.id == site.id) {
+            await box.putAt(i, site.toJson());
+            found = true;
+            break;
+          }
+        }
+      }
+
+      // Add new site if not found
+      if (!found) {
+        await box.add(site.toJson());
+      }
+
+      // Update stream
+      await _loadForagingSites();
+    } catch (e) {
+      _logger.severe('Error saving foraging site: $e');
+      throw Exception('Failed to save foraging site: $e');
+    }
+  }
+
+  /// Load all foraging sites and update stream
+  Future<void> _loadForagingSites() async {
+    final sites = await getForagingSites();
+    _foragingSitesStreamController.add(sites);
+  }
+
+  /// Calculate distance between two LatLng points in meters
+  double calculateDistance(LatLng point1, LatLng point2) {
+    return Geolocator.distanceBetween(
+      point1.latitude,
+      point1.longitude,
+      point2.latitude,
+      point2.longitude,
+    );
+  }
+
+  /// Calculate total distance of a track in kilometers
+  double calculateTrackDistance(List<LatLng> track) {
+    double totalDistance = 0;
+    for (int i = 0; i < track.length - 1; i++) {
+      totalDistance += calculateDistance(track[i], track[i + 1]);
+    }
+    return totalDistance / 1000; // Convert to kilometers
+  }
+
+  /// Clean up resources
   void dispose() {
-    _positionStreamSubscription?.cancel();
-    _locationController.close();
+    _logger.info('Disposing location service');
+    _positionSubscription?.cancel();
+    _positionStreamController.close();
+    _foragingSitesStreamController.close();
   }
 }
