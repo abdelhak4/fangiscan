@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mushroom Identification App - Flutter Architecture Demo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path>
+                    <path d="M12 8v4"></path>
+                    <path d="M12 16h.01"></path>
+                </svg>
+                <h1>FungiScan</h1>
+            </div>
+            <div class="nav-tabs">
+                <button class="tab-button active" data-tab="overview">Overview</button>
+                <button class="tab-button" data-tab="architecture">Architecture</button>
+                <button class="tab-button" data-tab="features">Features</button>
+                <button class="tab-button" data-tab="code-examples">Code Examples</button>
+            </div>
+        </header>
+
+        <main class="app-content">
+            <!-- Overview Tab -->
+            <section id="overview" class="tab-content active">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h2>FungiScan Mushroom Identification App</h2>
+                            <p class="lead">An AI-powered Flutter application for identifying mushrooms with offline functionality and location tracking.</p>
+                            
+                            <div class="feature-highlight">
+                                <h3>Key Features</h3>
+                                <ul>
+                                    <li><i data-feather="camera"></i> AI-Driven Identification with TensorFlow Lite</li>
+                                    <li><i data-feather="search"></i> Trait-based Mushroom Search</li>
+                                    <li><i data-feather="wifi-off"></i> Offline-First Functionality</li>
+                                    <li><i data-feather="map-pin"></i> Foraging Site Tracker with GPS</li>
+                                    <li><i data-feather="alert-triangle"></i> Toxicity Warnings and Look-alike Comparisons</li>
+                                    <li><i data-feather="message-circle"></i> Expert Verification via In-App Chat</li>
+                                    <li><i data-feather="award"></i> Gamified Challenges and Community Forum</li>
+                                    <li><i data-feather="lock"></i> Privacy-Focused with End-to-End Encryption</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="app-mockup">
+                                <div class="phone-frame">
+                                    <div class="phone-screen">
+                                        <div class="mockup-header">
+                                            <h3>FungiScan</h3>
+                                        </div>
+                                        <div class="mockup-content">
+                                            <div class="camera-button">
+                                                <i data-feather="camera"></i>
+                                                <span>Identify</span>
+                                            </div>
+                                            <div class="mushroom-gallery">
+                                                <h4>Recent Discoveries</h4>
+                                                <div class="gallery-items">
+                                                    <div class="gallery-item">
+                                                        <div class="mushroom-icon">🍄</div>
+                                                        <span>Chanterelle</span>
+                                                    </div>
+                                                    <div class="gallery-item">
+                                                        <div class="mushroom-icon">🍄</div>
+                                                        <span>Morel</span>
+                                                    </div>
+                                                    <div class="gallery-item">
+                                                        <div class="mushroom-icon">🍄</div>
+                                                        <span>Oyster</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mockup-footer">
+                                            <div class="nav-icon active"><i data-feather="home"></i></div>
+                                            <div class="nav-icon"><i data-feather="map"></i></div>
+                                            <div class="nav-icon"><i data-feather="book"></i></div>
+                                            <div class="nav-icon"><i data-feather="user"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Tab -->
+            <section id="architecture" class="tab-content">
+                <div class="container">
+                    <h2>Clean Architecture</h2>
+                    <p>FungiScan is built using Clean Architecture principles to ensure maintainability, testability, and scalability.</p>
+                    
+                    <div class="architecture-diagram">
+                        <div class="arch-layer" id="presentation-layer">
+                            <h3>Presentation Layer</h3>
+                            <div class="arch-components">
+                                <div class="arch-component">Screens</div>
+                                <div class="arch-component">Widgets</div>
+                            </div>
+                        </div>
+                        <div class="arch-layer" id="application-layer">
+                            <h3>Application Layer</h3>
+                            <div class="arch-components">
+                                <div class="arch-component">Blocs/Cubits</div>
+                                <div class="arch-component">State Management</div>
+                            </div>
+                        </div>
+                        <div class="arch-layer" id="domain-layer">
+                            <h3>Domain Layer</h3>
+                            <div class="arch-components">
+                                <div class="arch-component">Entities</div>
+                                <div class="arch-component">Repositories (Interfaces)</div>
+                                <div class="arch-component">Use Cases</div>
+                            </div>
+                        </div>
+                        <div class="arch-layer" id="data-layer">
+                            <h3>Data Layer</h3>
+                            <div class="arch-components">
+                                <div class="arch-component">Repository Implementations</div>
+                                <div class="arch-component">Data Sources</div>
+                            </div>
+                        </div>
+                        <div class="arch-layer" id="infrastructure-layer">
+                            <h3>Infrastructure Layer</h3>
+                            <div class="arch-components">
+                                <div class="arch-component">External Libraries</div>
+                                <div class="arch-component">Device Services</div>
+                                <div class="arch-component">Firebase/ML Services</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack">
+                        <h3>Tech Stack</h3>
+                        <div class="tech-items">
+                            <div class="tech-item">Flutter 3.22+</div>
+                            <div class="tech-item">Dart 3.3</div>
+                            <div class="tech-item">Firebase (Auth/Firestore)</div>
+                            <div class="tech-item">Bloc for State Management</div>
+                            <div class="tech-item">TensorFlow Lite</div>
+                            <div class="tech-item">Hive for Offline Storage</div>
+                            <div class="tech-item">Google Maps</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Tab -->
+            <section id="features" class="tab-content">
+                <div class="container">
+                    <h2>Key Features</h2>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i data-feather="camera"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>AI-Driven Identification</h3>
+                            <p>Leverages TensorFlow Lite model trained on regional mushroom datasets for fast, accurate identification. The model works offline and provides detailed information about the identified mushroom.</p>
+                            <div class="implementation-notes">
+                                <h4>Implementation:</h4>
+                                <ul>
+                                    <li>TensorFlow Lite model integration</li>
+                                    <li>Image preprocessing pipeline</li>
+                                    <li>Confidence score calculation</li>
+                                    <li>Multi-angle analysis to improve accuracy</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i data-feather="wifi-off"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>Offline-First Functionality</h3>
+                            <p>The app works seamlessly without an internet connection, perfect for foraging in remote areas with no cell service.</p>
+                            <div class="implementation-notes">
+                                <h4>Implementation:</h4>
+                                <ul>
+                                    <li>Hive database for local storage</li>
+                                    <li>Offline-first architecture pattern</li>
+                                    <li>Local model inference</li>
+                                    <li>Sync mechanism when back online</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i data-feather="map-pin"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>Foraging Site Tracker</h3>
+                            <p>GPS pinning and footprint maps allow users to track and revisit their favorite foraging spots. The app records location data, time, and found species.</p>
+                            <div class="implementation-notes">
+                                <h4>Implementation:</h4>
+                                <ul>
+                                    <li>Google Maps integration</li>
+                                    <li>Geolocator package for precise location</li>
+                                    <li>Path tracking with Polylines</li>
+                                    <li>Offline map caching</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i data-feather="alert-triangle"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>Safety & Toxicity Warnings</h3>
+                            <p>Provides detailed toxicity information and side-by-side comparisons of edible mushrooms with their poisonous lookalikes to prevent misidentification.</p>
+                            <div class="implementation-notes">
+                                <h4>Implementation:</h4>
+                                <ul>
+                                    <li>Visual comparison tool</li>
+                                    <li>Detailed toxicity database</li>
+                                    <li>Warning system for dangerous species</li>
+                                    <li>Expert verification workflow</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i data-feather="users"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>Community & Expert Verification</h3>
+                            <p>Connect with experts and fellow enthusiasts through in-app chat for verification and discussion. Gamified challenges encourage learning and participation.</p>
+                            <div class="implementation-notes">
+                                <h4>Implementation:</h4>
+                                <ul>
+                                    <li>Firebase chat integration</li>
+                                    <li>Expert verification system</li>
+                                    <li>Badge and achievement system</li>
+                                    <li>Community forums</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code Examples Tab -->
+            <section id="code-examples" class="tab-content">
+                <div class="container">
+                    <h2>Flutter Code Examples</h2>
+                    <p>Below are key code snippets demonstrating how the app would be implemented in Flutter.</p>
+                    
+                    <div class="code-example">
+                        <h3>Main App Structure</h3>
+                        <pre><code class="language-dart">
+// main.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fungiscan/application/identification/identification_bloc.dart';
+import 'package:fungiscan/application/map/map_bloc.dart';
+import 'package:fungiscan/data/repositories/mushroom_repository_impl.dart';
+import 'package:fungiscan/domain/repositories/mushroom_repository.dart';
+import 'package:fungiscan/infrastructure/services/ml_service.dart';
+import 'package:fungiscan/infrastructure/services/location_service.dart';
+import 'package:fungiscan/presentation/screens/home_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize services
+  final mlService = MLService();
+  await mlService.loadModel();
+  
+  final locationService = LocationService();
+  await locationService.initialize();
+  
+  // Repository setup
+  final MushroomRepository mushroomRepository = MushroomRepositoryImpl();
+  
+  runApp(MyApp(
+    mushroomRepository: mushroomRepository,
+    mlService: mlService,
+    locationService: locationService,
+  ));
+}
+
+class MyApp extends StatelessWidget {
+  final MushroomRepository mushroomRepository;
+  final MLService mlService;
+  final LocationService locationService;
+  
+  const MyApp({
+    Key? key,
+    required this.mushroomRepository,
+    required this.mlService,
+    required this.locationService,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => IdentificationBloc(
+            mushroomRepository: mushroomRepository,
+            mlService: mlService,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => MapBloc(
+            mushroomRepository: mushroomRepository,
+            locationService: locationService,
+          ),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'FungiScan',
+        theme: ThemeData(
+          primarySwatch: Colors.green,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          fontFamily: 'Poppins',
+        ),
+        darkTheme: ThemeData.dark().copyWith(
+          primaryColor: Colors.green[700],
+          colorScheme: ColorScheme.dark(
+            primary: Colors.green[700]!,
+            secondary: Colors.amber,
+          ),
+        ),
+        themeMode: ThemeMode.system,
+        home: const HomeScreen(),
+      ),
+    );
+  }
+}
+                        </code></pre>
+                    </div>
+                    
+                    <div class="code-example">
+                        <h3>TensorFlow Lite Integration</h3>
+                        <pre><code class="language-dart">
+// infrastructure/services/ml_service.dart
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
+import 'package:tflite_flutter/tflite_flutter.dart';
+
+class MLService {
+  static const String MODEL_PATH = 'assets/ml/mushroom_model.tflite';
+  static const String LABELS_PATH = 'assets/ml/mushroom_labels.txt';
+  
+  late Interpreter _interpreter;
+  late List<String> _labels;
+  
+  Future<void> loadModel() async {
+    try {
+      // Load TFLite model
+      final interpreterOptions = InterpreterOptions();
+      
+      // Use NNAPI delegate for Android devices
+      if (Platform.isAndroid) {
+        interpreterOptions.addDelegate(NnApiDelegate());
+      }
+      
+      // Use Metal delegate for iOS devices
+      if (Platform.isIOS) {
+        interpreterOptions.addDelegate(GpuDelegate());
+      }
+      
+      _interpreter = await Interpreter.fromAsset(
+        MODEL_PATH,
+        options: interpreterOptions,
+      );
+      
+      // Load labels
+      final labelsData = await rootBundle.loadString(LABELS_PATH);
+      _labels = labelsData.split('\n');
+      
+      print('ML model and labels loaded successfully');
+    } catch (e) {
+      print('Error loading model: $e');
+      rethrow;
+    }
+  }
+  
+  Future<Map<String, dynamic>> identifyMushroom(File imageFile) async {
+    // Decode and resize image
+    final imageBytes = await imageFile.readAsBytes();
+    final image = img.decodeImage(imageBytes)!;
+    final resizedImage = img.copyResize(image, width: 224, height: 224);
+    
+    // Convert to binary format expected by the model (float32 buffer)
+    final input = _imageToByteListFloat32(resizedImage);
+    
+    // Output buffer
+    final output = List<List<double>>.filled(
+      1,
+      List<double>.filled(_labels.length, 0),
+    );
+    
+    // Run inference
+    _interpreter.run(input, output);
+    
+    // Process results
+    final result = _processResults(output);
+    
+    return result;
+  }
+  
+  // Convert image to float32 tensor
+  List<List<List<List<double>>>> _imageToByteListFloat32(img.Image image) {
+    final tensorImage = List.generate(
+      1,
+      (_) => List.generate(
+        224,
+        (y) => List.generate(
+          224,
+          (x) => List.generate(
+            3,
+            (c) {
+              final pixel = image.getPixel(x, y);
+              // Normalize pixel values
+              return (c == 0) ? pixel.r / 255.0 : 
+                     (c == 1) ? pixel.g / 255.0 : 
+                                pixel.b / 255.0;
+            },
+          ),
+        ),
+      ),
+    );
+    return tensorImage;
+  }
+  
+  Map<String, dynamic> _processResults(List<List<double>> outputs) {
+    // Get the output scores
+    final scores = outputs[0];
+    
+    // Find the highest confidence score and its index
+    var maxScore = 0.0;
+    var maxIndex = 0;
+    
+    for (var i = 0; i < scores.length; i++) {
+      if (scores[i] > maxScore) {
+        maxScore = scores[i];
+        maxIndex = i;
+      }
+    }
+    
+    // Get top 3 results
+    final List<Map<String, dynamic>> top3Results = [];
+    
+    // Create a list of (score, index) pairs
+    final indexedScores = List<Map<String, dynamic>>.generate(
+      scores.length,
+      (i) => {'score': scores[i], 'index': i},
+    );
+    
+    // Sort by score in descending order
+    indexedScores.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+    
+    // Get top 3
+    for (var i = 0; i < 3 && i < indexedScores.length; i++) {
+      final score = indexedScores[i]['score'] as double;
+      final index = indexedScores[i]['index'] as int;
+      
+      top3Results.add({
+        'label': _labels[index],
+        'confidence': score,
+      });
+    }
+    
+    return {
+      'topResult': {
+        'label': _labels[maxIndex],
+        'confidence': maxScore,
+      },
+      'top3Results': top3Results,
+      'rawScores': scores,
+    };
+  }
+  
+  void dispose() {
+    _interpreter.close();
+  }
+}
+                        </code></pre>
+                    </div>
+                    
+                    <div class="code-example">
+                        <h3>Location Tracking and Map Integration</h3>
+                        <pre><code class="language-dart">
+// infrastructure/services/location_service.dart
+import 'dart:async';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+class LocationService {
+  // Stream for real-time location updates
+  StreamSubscription<Position>? _positionStreamSubscription;
+  final _locationController = StreamController<Position>.broadcast();
+  Stream<Position> get locationStream => _locationController.stream;
+  
+  // Track user path during foraging
+  final List<LatLng> _currentPath = [];
+  List<LatLng> get currentPath => List.unmodifiable(_currentPath);
+  
+  // Track if we're currently recording a path
+  bool _isRecordingPath = false;
+  bool get isRecordingPath => _isRecordingPath;
+  
+  Future<void> initialize() async {
+    await _checkLocationPermission();
+  }
+  
+  Future<bool> _checkLocationPermission() async {
+    // Check if location services are enabled
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return false;
+    }
+    
+    // Check location permission
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return false;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      await openAppSettings();
+      return false;
+    }
+    
+    return true;
+  }
+  
+  Future<Position?> getCurrentLocation() async {
+    final hasPermission = await _checkLocationPermission();
+    if (!hasPermission) return null;
+    
+    try {
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+    } catch (e) {
+      print('Error getting location: $e');
+      return null;
+    }
+  }
+  
+  void startLocationTracking() {
+    _positionStreamSubscription?.cancel();
+    
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5, // Update every 5 meters
+      ),
+    ).listen(
+      (Position position) {
+        _locationController.add(position);
+        
+        if (_isRecordingPath) {
+          _currentPath.add(LatLng(position.latitude, position.longitude));
+        }
+      },
+      onError: (error) {
+        print('Error in location stream: $error');
+      },
+    );
+  }
+  
+  void stopLocationTracking() {
+    _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = null;
+  }
+  
+  void startPathRecording() {
+    _currentPath.clear();
+    _isRecordingPath = true;
+    
+    // Make sure we're tracking location
+    if (_positionStreamSubscription == null) {
+      startLocationTracking();
+    }
+  }
+  
+  Future<List<LatLng>> stopPathRecording() async {
+    _isRecordingPath = false;
+    return _currentPath;
+  }
+  
+  Future<void> saveForagingLocation({
+    required String locationName,
+    required String notes,
+    required List<String> foundSpecies,
+    required LatLng coordinates,
+    List<LatLng>? path,
+  }) async {
+    // Implementation would store this in a local database
+    // and sync to Firebase when online
+    print('Saving foraging location: $locationName at $coordinates');
+    
+    // This would typically connect to the repository
+    // return forageRepository.saveLocation(...);
+  }
+  
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    _locationController.close();
+  }
+}
+
+// presentation/screens/map_screen.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:fungiscan/application/map/map_bloc.dart';
+import 'package:fungiscan/infrastructure/services/location_service.dart';
+
+class MapScreen extends StatefulWidget {
+  const MapScreen({Key? key}) : super(key: key);
+
+  @override
+  _MapScreenState createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  GoogleMapController? _mapController;
+  final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
+  
+  @override
+  void initState() {
+    super.initState();
+    context.read<MapBloc>().add(LoadSavedLocationsEvent());
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Foraging Map'),
+        actions: [
+          BlocBuilder<MapBloc, MapState>(
+            builder: (context, state) {
+              final isRecording = state.isRecordingPath;
+              return IconButton(
+                icon: Icon(
+                  isRecording ? Icons.stop_circle : Icons.play_circle,
+                  color: isRecording ? Colors.red : Colors.white,
+                ),
+                onPressed: () {
+                  if (isRecording) {
+                    context.read<MapBloc>().add(StopPathRecordingEvent());
+                  } else {
+                    context.read<MapBloc>().add(StartPathRecordingEvent());
+                  }
+                },
+                tooltip: isRecording ? 'Stop Recording' : 'Start Recording Path',
+              );
+            },
+          ),
+        ],
+      ),
+      body: BlocConsumer<MapBloc, MapState>(
+        listener: (context, state) {
+          if (state.status == MapStatus.locationUpdated && 
+              state.currentLocation != null) {
+            _updateCurrentLocation(state.currentLocation!);
+          }
+          
+          if (state.status == MapStatus.savedLocationsLoaded) {
+            _updateSavedLocations(state.savedLocations);
+          }
+          
+          if (state.status == MapStatus.pathUpdated) {
+            _updatePathPolyline(state.currentPath);
+          }
+        },
+        builder: (context, state) {
+          return GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: state.currentLocation ?? const LatLng(37.42796, -122.08574),
+              zoom: 15.0,
+            ),
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            markers: _markers,
+            polylines: _polylines,
+            onMapCreated: (GoogleMapController controller) {
+              _mapController = controller;
+              // Get current location when map is created
+              context.read<MapBloc>().add(GetCurrentLocationEvent());
+            },
+            onLongPress: (LatLng position) {
+              _showAddLocationDialog(position);
+            },
+          );
+        },
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'centerMap',
+            onPressed: () {
+              context.read<MapBloc>().add(GetCurrentLocationEvent());
+            },
+            child: const Icon(Icons.my_location),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton(
+            heroTag: 'listLocations',
+            onPressed: () {
+              _showSavedLocationsList();
+            },
+            child: const Icon(Icons.list),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _updateCurrentLocation(LatLng location) {
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLng(location),
+    );
+  }
+  
+  void _updateSavedLocations(List<SavedLocation> locations) {
+    setState(() {
+      _markers.clear();
+      
+      for (final location in locations) {
+        _markers.add(
+          Marker(
+            markerId: MarkerId(location.id),
+            position: location.coordinates,
+            infoWindow: InfoWindow(
+              title: location.name,
+              snippet: '${location.species.length} species found',
+              onTap: () {
+                _showLocationDetails(location);
+              },
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          ),
+        );
+      }
+    });
+  }
+  
+  void _updatePathPolyline(List<LatLng> path) {
+    setState(() {
+      _polylines.clear();
+      
+      if (path.isNotEmpty) {
+        _polylines.add(
+          Polyline(
+            polylineId: const PolylineId('currentPath'),
+            points: path,
+            color: Colors.blue,
+            width: 5,
+          ),
+        );
+      }
+    });
+  }
+  
+  void _showAddLocationDialog(LatLng position) {
+    final nameController = TextEditingController();
+    final notesController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Foraging Location'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Location Name',
+                ),
+              ),
+              TextField(
+                controller: notesController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes',
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (nameController.text.trim().isNotEmpty) {
+                context.read<MapBloc>().add(
+                  SaveForagingLocationEvent(
+                    name: nameController.text.trim(),
+                    notes: notesController.text.trim(),
+                    species: const [],
+                    coordinates: position,
+                  ),
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showSavedLocationsList() {
+    final state = context.read<MapBloc>().state;
+    
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Saved Foraging Locations',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: state.savedLocations.isEmpty
+                  ? const Center(
+                      child: Text('No saved locations yet'),
+                    )
+                  : ListView.builder(
+                      itemCount: state.savedLocations.length,
+                      itemBuilder: (context, index) {
+                        final location = state.savedLocations[index];
+                        return ListTile(
+                          title: Text(location.name),
+                          subtitle: Text(
+                            '${location.species.isEmpty ? "No" : location.species.length} species found',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _mapController?.animateCamera(
+                              CameraUpdate.newLatLngZoom(
+                                location.coordinates,
+                                15.0,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showLocationDetails(SavedLocation location) {
+    // Implementation to show detailed information about a saved location
+  }
+}
+                        </code></pre>
+                    </div>
+                    
+                    <div class="code-example">
+                        <h3>Mushroom Identification Screen</h3>
+                        <pre><code class="language-dart">
+// presentation/screens/identification_screen.dart
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:fungiscan/application/identification/identification_bloc.dart';
+import 'package:fungiscan/domain/models/mushroom.dart';
+
+class IdentificationScreen extends StatelessWidget {
+  const IdentificationScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Identify Mushroom'),
+      ),
+      body: BlocConsumer<IdentificationBloc, IdentificationState>(
+        listener: (context, state) {
+          if (state.status == IdentificationStatus.failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${state.errorMessage}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Image preview
+                if (state.imageFile != null)
+                  Container(
+                    height: 300,
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        state.imageFile!,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    height: 300,
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey[400]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.camera_alt_outlined,
+                            size: 64,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Take or select a photo to identify',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                // Camera/Gallery buttons
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Camera'),
+                          onPressed: () => _getImage(context, ImageSource.camera),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text('Gallery'),
+                          onPressed: () => _getImage(context, ImageSource.gallery),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Identification Results
+                if (state.status == IdentificationStatus.loading)
+                  const Center(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 20),
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Identifying mushroom...'),
+                      ],
+                    ),
+                  )
+                else if (state.status == IdentificationStatus.success && state.identifiedMushroom != null)
+                  _buildIdentificationResults(context, state.identifiedMushroom!),
+                
+                const SizedBox(height: 24),
+                
+                // Manual Search Option
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: OutlinedButton(
+                    onPressed: () {
+                      _showTraitBasedSearchDialog(context);
+                    },
+                    child: const Text('Search by Traits Instead'),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  void _getImage(BuildContext context, ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 90,
+    );
+    
+    if (pickedFile != null) {
+      final File imageFile = File(pickedFile.path);
+      context.read<IdentificationBloc>().add(
+        IdentifyMushroomEvent(imageFile: imageFile),
+      );
+    }
+  }
+  
+  Widget _buildIdentificationResults(BuildContext context, Mushroom mushroom) {
+    final confidencePercent = (mushroom.confidence * 100).toStringAsFixed(1);
+    
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      mushroom.commonName,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      mushroom.scientificName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _getConfidenceColor(mushroom.confidence),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  '$confidencePercent% Match',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Edibility & Safety
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _getEdibilityColor(mushroom.edibility),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _getEdibilityIcon(mushroom.edibility),
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _getEdibilityText(mushroom.edibility),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Description
+          const Text(
+            'Description',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(mushroom.description),
+          
+          const SizedBox(height: 16),
+          
+          // Habitat
+          const Text(
+            'Habitat',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(mushroom.habitat),
+          
+          const SizedBox(height: 16),
+          
+          // Lookalikes
+          if (mushroom.lookalikes.isNotEmpty) ...[
+            const Text(
+              'Similar Species',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              children: mushroom.lookalikes.map((lookalike) {
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _getEdibilityColor(lookalike.edibility),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  title: Text(lookalike.commonName),
+                  subtitle: Text(
+                    lookalike.scientificName,
+                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    // Navigate to lookalike details
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+          
+          const SizedBox(height: 16),
+          
+          // Actions
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildActionButton(
+                icon: Icons.map,
+                label: 'Save Location',
+                onTap: () {
+                  // Implement save location
+                },
+              ),
+              _buildActionButton(
+                icon: Icons.chat,
+                label: 'Ask Expert',
+                onTap: () {
+                  // Navigate to expert chat
+                },
+              ),
+              _buildActionButton(
+                icon: Icons.bookmark_border,
+                label: 'Save',
+                onTap: () {
+                  // Save mushroom to collection
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: 8,
+          horizontal: 12,
+        ),
+        child: Column(
+          children: [
+            Icon(icon),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Color _getConfidenceColor(double confidence) {
+    if (confidence >= 0.9) return Colors.green;
+    if (confidence >= 0.7) return Colors.orange;
+    return Colors.red;
+  }
+  
+  Color _getEdibilityColor(Edibility edibility) {
+    switch (edibility) {
+      case Edibility.edible:
+        return Colors.green;
+      case Edibility.inedible:
+        return Colors.grey;
+      case Edibility.poisonous:
+        return Colors.red;
+      case Edibility.psychoactive:
+        return Colors.purple;
+      case Edibility.unknown:
+      default:
+        return Colors.grey;
+    }
+  }
+  
+  IconData _getEdibilityIcon(Edibility edibility) {
+    switch (edibility) {
+      case Edibility.edible:
+        return Icons.check_circle;
+      case Edibility.inedible:
+        return Icons.not_interested;
+      case Edibility.poisonous:
+        return Icons.warning;
+      case Edibility.psychoactive:
+        return Icons.psychology;
+      case Edibility.unknown:
+      default:
+        return Icons.help;
+    }
+  }
+  
+  String _getEdibilityText(Edibility edibility) {
+    switch (edibility) {
+      case Edibility.edible:
+        return 'Edible';
+      case Edibility.inedible:
+        return 'Not Edible';
+      case Edibility.poisonous:
+        return 'Poisonous - DO NOT EAT';
+      case Edibility.psychoactive:
+        return 'Psychoactive';
+      case Edibility.unknown:
+      default:
+        return 'Edibility Unknown';
+    }
+  }
+  
+  void _showTraitBasedSearchDialog(BuildContext context) {
+    // Implementation for trait-based search dialog
+  }
+}
+                        </code></pre>
+                    </div>
+                    
+                    <div class="code-example">
+                        <h3>Data Models</h3>
+                        <pre><code class="language-dart">
+// domain/models/mushroom.dart
+enum Edibility {
+  edible,
+  inedible,
+  poisonous,
+  psychoactive,
+  unknown,
+}
+
+class Mushroom {
+  final String id;
+  final String commonName;
+  final String scientificName;
+  final String description;
+  final Edibility edibility;
+  final String habitat;
+  final List<String> traits;
+  final List<String> seasons;
+  final List<LookalikeSpecies> lookalikes;
+  final double confidence; // Confidence score from identification
+
+  Mushroom({
+    required this.id,
+    required this.commonName,
+    required this.scientificName,
+    required this.description,
+    required this.edibility,
+    required this.habitat,
+    required this.traits,
+    required this.seasons,
+    required this.lookalikes,
+    this.confidence = 1.0,
+  });
+
+  factory Mushroom.fromJson(Map<String, dynamic> json) {
+    return Mushroom(
+      id: json['id'],
+      commonName: json['commonName'],
+      scientificName: json['scientificName'],
+      description: json['description'],
+      edibility: _parseEdibility(json['edibility']),
+      habitat: json['habitat'],
+      traits: List<String>.from(json['traits']),
+      seasons: List<String>.from(json['seasons']),
+      lookalikes: (json['lookalikes'] as List)
+          .map((l) => LookalikeSpecies.fromJson(l))
+          .toList(),
+      confidence: json['confidence'] ?? 1.0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'commonName': commonName,
+      'scientificName': scientificName,
+      'description': description,
+      'edibility': edibility.toString().split('.').last,
+      'habitat': habitat,
+      'traits': traits,
+      'seasons': seasons,
+      'lookalikes': lookalikes.map((l) => l.toJson()).toList(),
+      'confidence': confidence,
+    };
+  }
+
+  static Edibility _parseEdibility(String value) {
+    switch (value.toLowerCase()) {
+      case 'edible':
+        return Edibility.edible;
+      case 'inedible':
+        return Edibility.inedible;
+      case 'poisonous':
+        return Edibility.poisonous;
+      case 'psychoactive':
+        return Edibility.psychoactive;
+      default:
+        return Edibility.unknown;
+    }
+  }
+}
+
+class LookalikeSpecies {
+  final String id;
+  final String commonName;
+  final String scientificName;
+  final Edibility edibility;
+  final String differentiationNotes;
+
+  LookalikeSpecies({
+    required this.id,
+    required this.commonName,
+    required this.scientificName,
+    required this.edibility,
+    required this.differentiationNotes,
+  });
+
+  factory LookalikeSpecies.fromJson(Map<String, dynamic> json) {
+    return LookalikeSpecies(
+      id: json['id'],
+      commonName: json['commonName'],
+      scientificName: json['scientificName'],
+      edibility: Mushroom._parseEdibility(json['edibility']),
+      differentiationNotes: json['differentiationNotes'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'commonName': commonName,
+      'scientificName': scientificName,
+      'edibility': edibility.toString().split('.').last,
+      'differentiationNotes': differentiationNotes,
+    };
+  }
+}
+
+class SavedLocation {
+  final String id;
+  final String name;
+  final String notes;
+  final DateTime timestamp;
+  final LatLng coordinates;
+  final List<LatLng>? path;
+  final List<String> species;
+  final List<String>? photos;
+
+  SavedLocation({
+    required this.id,
+    required this.name,
+    required this.notes,
+    required this.timestamp,
+    required this.coordinates,
+    this.path,
+    required this.species,
+    this.photos,
+  });
+
+  factory SavedLocation.fromJson(Map<String, dynamic> json) {
+    return SavedLocation(
+      id: json['id'],
+      name: json['name'],
+      notes: json['notes'],
+      timestamp: DateTime.parse(json['timestamp']),
+      coordinates: LatLng(
+        json['coordinates']['latitude'],
+        json['coordinates']['longitude'],
+      ),
+      path: json['path'] != null
+          ? (json['path'] as List)
+              .map((p) => LatLng(p['latitude'], p['longitude']))
+              .toList()
+          : null,
+      species: List<String>.from(json['species']),
+      photos: json['photos'] != null ? List<String>.from(json['photos']) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'notes': notes,
+      'timestamp': timestamp.toIso8601String(),
+      'coordinates': {
+        'latitude': coordinates.latitude,
+        'longitude': coordinates.longitude,
+      },
+      'path': path?.map((p) => {
+            'latitude': p.latitude,
+            'longitude': p.longitude,
+          }).toList(),
+      'species': species,
+      'photos': photos,
+    };
+  }
+}
+                        </code></pre>
+                    </div>
+                    
+                    <div class="code-example">
+                        <h3>Offline Database Implementation</h3>
+                        <pre><code class="language-dart">
+// data/datasources/local/database_helper.dart
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:fungiscan/domain/models/mushroom.dart';
+
+class DatabaseHelper {
+  static const String mushroomsBoxName = 'mushrooms';
+  static const String savedLocationsBoxName = 'saved_locations';
+  static const String userPreferencesBoxName = 'user_preferences';
+
+  static Future<void> initialize() async {
+    // Initialize Hive
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    Hive.init(appDocumentDir.path);
+    
+    // Register adapters
+    Hive.registerAdapter(MushroomAdapter());
+    Hive.registerAdapter(EdibilityAdapter());
+    Hive.registerAdapter(LookalikeSpeciesAdapter());
+    Hive.registerAdapter(SavedLocationAdapter());
+    Hive.registerAdapter(LatLngAdapter());
+    
+    // Open boxes
+    await Hive.openBox<Mushroom>(mushroomsBoxName);
+    await Hive.openBox<SavedLocation>(savedLocationsBoxName);
+    await Hive.openBox(userPreferencesBoxName);
+    
+    print('Database initialized successfully');
+  }
+  
+  // Mushroom operations
+  static Future<List<Mushroom>> getAllMushrooms() async {
+    final box = Hive.box<Mushroom>(mushroomsBoxName);
+    return box.values.toList();
+  }
+  
+  static Future<Mushroom?> getMushroomById(String id) async {
+    final box = Hive.box<Mushroom>(mushroomsBoxName);
+    return box.get(id);
+  }
+  
+  static Future<void> saveMushroom(Mushroom mushroom) async {
+    final box = Hive.box<Mushroom>(mushroomsBoxName);
+    await box.put(mushroom.id, mushroom);
+  }
+  
+  static Future<List<Mushroom>> searchMushroomsByTraits(List<String> traits) async {
+    final box = Hive.box<Mushroom>(mushroomsBoxName);
+    return box.values.where((mushroom) {
+      return traits.every((trait) => 
+        mushroom.traits.contains(trait.toLowerCase()));
+    }).toList();
+  }
+  
+  // Location operations
+  static Future<List<SavedLocation>> getAllSavedLocations() async {
+    final box = Hive.box<SavedLocation>(savedLocationsBoxName);
+    return box.values.toList();
+  }
+  
+  static Future<SavedLocation?> getSavedLocationById(String id) async {
+    final box = Hive.box<SavedLocation>(savedLocationsBoxName);
+    return box.get(id);
+  }
+  
+  static Future<void> saveLocation(SavedLocation location) async {
+    final box = Hive.box<SavedLocation>(savedLocationsBoxName);
+    await box.put(location.id, location);
+  }
+  
+  static Future<void> deleteLocation(String id) async {
+    final box = Hive.box<SavedLocation>(savedLocationsBoxName);
+    await box.delete(id);
+  }
+  
+  // User preferences
+  static Future<void> saveUserPreference(String key, dynamic value) async {
+    final box = Hive.box(userPreferencesBoxName);
+    await box.put(key, value);
+  }
+  
+  static dynamic getUserPreference(String key, {dynamic defaultValue}) {
+    final box = Hive.box(userPreferencesBoxName);
+    return box.get(key, defaultValue: defaultValue);
+  }
+  
+  // Sync operations - would connect to remote data source when online
+  static Future<void> syncData() async {
+    // Implementation would check network connectivity
+    // and sync local data with remote server
+    print('Syncing data...');
+  }
+  
+  static void close() {
+    Hive.close();
+  }
+}
+
+// Hive type adapters would be implemented here
+class MushroomAdapter extends TypeAdapter<Mushroom> {
+  @override
+  final int typeId = 0;
+  
+  @override
+  Mushroom read(BinaryReader reader) {
+    // Implementation details omitted for brevity
+    // Would deserialize Mushroom object from binary
+  }
+  
+  @override
+  void write(BinaryWriter writer, Mushroom obj) {
+    // Implementation details omitted for brevity
+    // Would serialize Mushroom object to binary
+  }
+}
+
+class EdibilityAdapter extends TypeAdapter<Edibility> {
+  @override
+  final int typeId = 1;
+  
+  @override
+  Edibility read(BinaryReader reader) {
+    // Implementation details omitted for brevity
+  }
+  
+  @override
+  void write(BinaryWriter writer, Edibility obj) {
+    // Implementation details omitted for brevity
+  }
+}
+
+class LookalikeSpeciesAdapter extends TypeAdapter<LookalikeSpecies> {
+  @override
+  final int typeId = 2;
+  
+  @override
+  LookalikeSpecies read(BinaryReader reader) {
+    // Implementation details omitted for brevity
+  }
+  
+  @override
+  void write(BinaryWriter writer, LookalikeSpecies obj) {
+    // Implementation details omitted for brevity
+  }
+}
+
+class SavedLocationAdapter extends TypeAdapter<SavedLocation> {
+  @override
+  final int typeId = 3;
+  
+  @override
+  SavedLocation read(BinaryReader reader) {
+    // Implementation details omitted for brevity
+  }
+  
+  @override
+  void write(BinaryWriter writer, SavedLocation obj) {
+    // Implementation details omitted for brevity
+  }
+}
+
+class LatLngAdapter extends TypeAdapter<LatLng> {
+  @override
+  final int typeId = 4;
+  
+  @override
+  LatLng read(BinaryReader reader) {
+    // Implementation details omitted for brevity
+  }
+  
+  @override
+  void write(BinaryWriter writer, LatLng obj) {
+    // Implementation details omitted for brevity
+  }
+}
+                        </code></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="scripts.js"></script>
+    <script>
+      feather.replace();
+    </script>
+</body>
+</html>
